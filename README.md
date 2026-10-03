@@ -122,4 +122,4 @@ I build and deploy AI agents wired into your CRM, data and workflows, from first
 
 **Reach out → [zov911.com](https://zov911.com)**
 
-© 2026 zov911. All rights reserved.
+© zov911. All rights reserved.
