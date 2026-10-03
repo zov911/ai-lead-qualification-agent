@@ -1,0 +1,21 @@
+{
+  "name": "ai-lead-qualification-agent",
+  "version": "1.0.0",
+  "description": "AI lead-qualification agent: CRM webhooks in, Ollama Qwen3 embeddings for vector fit scoring, Claude or OpenAI for BANT qualification, scored lead pushed back to your CRM.",
+  "type": "module",
+  "license": "UNLICENSED",
+  "author": "zov911 (https://zov911.com)",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node src/server.js",
+    "seed": "node scripts/seed.js",
+    "demo": "node scripts/demo.js",
+    "demo:export": "node scripts/demo.js --export demo-data.json",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
+    "openai": "^7.27.0",
+    "zod": "^4.6.5"
+  }
+}

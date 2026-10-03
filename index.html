@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Lead Qualification Agent — Live Demo</title>
+<meta name="description" content="AI lead-qualification agent: CRM webhooks in, Qwen3 embeddings for vector fit scoring, Claude or OpenAI for BANT qualification, scored leads pushed back to HubSpot, Pipedrive or any webhook. Built by zov911.">
+<meta name="author" content="zov911">
+<meta property="og:title" content="AI Lead Qualification Agent">
+<meta property="og:description" content="Vector + LLM lead scoring with CRM webhooks. Interactive demo.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0b0d12">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237c5cff'/%3E%3Cpath d='M9 22l5-6 4 3 6-9' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0d12;--panel:#12151d;--panel2:#181c26;--line:#252b38;--line2:#323a4b;
+  --text:#e8ecf3;--muted:#8d97ab;--dim:#626c80;
+  --violet:#7c5cff;--violet-d:rgba(124,92,255,.14);--cyan:#22d3ee;--green:#34d399;--green-d:rgba(52,211,153,.12);
+  --amber:#fbbf24;--amber-d:rgba(251,191,36,.12);--red:#f87171;--red-d:rgba(248,113,113,.12);
+  --r:12px;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+a{color:var(--cyan)}
+.wrap{max-width:1280px;margin:0 auto;padding:0 18px 40px}
+.bg-glow{position:fixed;inset:0;pointer-events:none;background:radial-gradient(900px 400px at 15% -10%,rgba(124,92,255,.18),transparent 60%),radial-gradient(700px 360px at 95% 0%,rgba(34,211,238,.10),transparent 60%);z-index:0}
+.wrap>*{position:relative;z-index:1}
+
+header.top{display:flex;align-items:center;gap:12px;padding:18px 0;border-bottom:1px solid var(--line)}
+.logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--violet),var(--cyan));display:grid;place-items:center;font-weight:800}
+.top .t{font-weight:700}.top .s{font-size:12px;color:var(--muted)}
+.top .right{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.pill{font-size:11px;font-weight:600;border:1px solid var(--line2);border-radius:999px;padding:4px 10px;color:var(--muted);white-space:nowrap}
+.pill.on{color:var(--green);border-color:rgba(52,211,153,.4)}
+
+.hero{padding:34px 0 20px;display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:center}
+@media(max-width:960px){.hero{grid-template-columns:1fr}}
+.kicker{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--violet)}
+h1{font-size:clamp(28px,4.2vw,44px);line-height:1.08;letter-spacing:-.02em;margin:10px 0 12px}
+h1 span{background:linear-gradient(90deg,var(--violet),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{color:var(--muted);font-size:15px;max-width:600px}
+
+/* Pipeline */
+.pipe{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;position:relative;transition:all .25s}
+.step b{display:block;font-size:12px}.step small{color:var(--dim);font-size:11px;line-height:1.3;display:block;margin-top:2px}
+.step .n{font-family:var(--mono);font-size:10px;color:var(--violet)}
+.step.active{border-color:var(--violet);background:var(--violet-d);box-shadow:0 0 0 1px var(--violet) inset}
+.step.done{border-color:rgba(52,211,153,.45)}
+@media(max-width:560px){.pipe{grid-template-columns:repeat(2,1fr)}}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:8px 0 18px}
+@media(max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.kpi .v{font-size:24px;font-weight:800;letter-spacing:-.02em}
+.kpi .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+
+.main{display:grid;grid-template-columns:360px 1fr;gap:16px;align-items:start}
+@media(max-width:960px){.main{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.ph h2{font-size:13px;font-weight:700}
+.ph .sub{font-size:11px;color:var(--dim)}
+
+/* Inbox */
+.inbox{max-height:640px;overflow:auto}
+.lead{display:grid;grid-template-columns:1fr auto;gap:4px 10px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:12px 14px;cursor:pointer;transition:background .15s}
+.lead:hover{background:var(--panel2)}
+.lead[aria-current="true"]{background:var(--violet-d);box-shadow:inset 3px 0 0 var(--violet)}
+.lead .nm{font-weight:600}.lead .co{font-size:12px;color:var(--muted)}
+.lead .msg{grid-column:1/-1;font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tier{font-family:var(--mono);font-weight:700;font-size:12px;border-radius:7px;padding:2px 8px;align-self:start;text-align:center;min-width:52px}
+.tA{background:var(--green-d);color:var(--green)}.tB{background:rgba(34,211,238,.12);color:var(--cyan)}.tC{background:var(--amber-d);color:var(--amber)}.tD{background:var(--red-d);color:var(--red)}
+.addbtn{width:100%;padding:12px;background:none;border:none;color:var(--violet);font-weight:600;cursor:pointer}
+.addbtn:hover{background:var(--panel2)}
+
+/* Detail */
+.detail{padding:16px}
+.dh{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;margin-bottom:16px}
+@media(max-width:560px){.dh{grid-template-columns:1fr}}
+.ring{width:132px;height:132px;position:relative}
+.ring svg{transform:rotate(-90deg)}
+.ring .c{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.ring .c b{font-size:36px;font-weight:800;line-height:1}.ring .c small{font-size:11px;color:var(--muted)}
+.who .nm{font-size:20px;font-weight:700}.who .co{color:var(--muted)}
+.route{display:inline-flex;align-items:center;gap:8px;margin-top:10px;font-weight:600;font-size:13px;padding:6px 12px;border-radius:8px}
+.summary{color:var(--muted);margin-top:8px;font-size:13px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}.grid4{grid-template-columns:repeat(2,1fr)}}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px}
+.card h3{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between;gap:8px}
+.card h3 span{color:var(--dim);letter-spacing:0;text-transform:none;font-weight:500}
+.sec{margin-top:12px}
+
+.bar{margin-bottom:10px}
+.bar .lb{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.bar .lb span:last-child{font-family:var(--mono);color:var(--muted)}
+.track{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+
+.bant{border-radius:9px;padding:10px;border:1px solid var(--line)}
+.bant .k{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+.bant .st{font-weight:700;margin:2px 0 4px;text-transform:capitalize}
+.bant .ev{font-size:11.5px;color:var(--dim);line-height:1.35}
+.s-strong{border-color:rgba(52,211,153,.45)}.s-strong .st{color:var(--green)}
+.s-partial{border-color:rgba(251,191,36,.4)}.s-partial .st{color:var(--amber)}
+.s-unknown .st{color:var(--dim)}.s-negative{border-color:rgba(248,113,113,.4)}.s-negative .st{color:var(--red)}
+
+.nb{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
+.nb:last-child{border-bottom:none}
+.oc{font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px}
+.won{background:var(--green-d);color:var(--green)}.lost{background:var(--red-d);color:var(--red)}
+.nb .sm{color:var(--dim);font-size:11.5px;display:block}
+.sim{font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+ul.list{list-style:none}
+ul.list li{padding:4px 0 4px 18px;position:relative;font-size:13px}
+ul.list li::before{position:absolute;left:0;top:4px}
+ul.pos li::before{content:'✓';color:var(--green)}ul.neg li::before{content:'!';color:var(--amber);font-weight:700}
+.sig{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0}
+.sig b{font-family:var(--mono)}.plus{color:var(--green)}.minus{color:var(--red)}
+
+pre{font-family:var(--mono);font-size:11.5px;background:#0a0c11;border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;max-height:260px;color:#b9c3d6}
+.reply{white-space:pre-wrap;font-size:13px;background:#0a0c11;border:1px solid var(--line);border-radius:8px;padding:12px;color:var(--text)}
+.mini{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--line2);background:none;cursor:pointer;color:var(--muted)}
+.mini:hover{border-color:var(--violet);color:var(--text)}
+.tabs{display:flex;gap:6px;margin-bottom:8px}
+.tabs button{font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:none;cursor:pointer;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--violet-d);border-color:var(--violet);color:var(--text)}
+
+/* Modal */
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line2);border-radius:14px;padding:0;width:min(560px,94vw)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+.form{padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form label{font-size:11px;font-weight:600;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.form input,.form textarea{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.form .full{grid-column:1/-1}
+.form textarea{min-height:90px;resize:vertical}
+.btn{background:var(--violet);border:none;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer;color:#fff}
+.btn.ghost{background:none;border:1px solid var(--line2);color:var(--text)}
+
+.how{margin-top:22px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:860px){.how{grid-template-columns:1fr}}
+.how .card p{color:var(--muted);font-size:13px}
+.how code{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+
+.cta{margin-top:24px;border-radius:14px;padding:24px;background:linear-gradient(135deg,rgba(124,92,255,.22),rgba(34,211,238,.10));border:1px solid rgba(124,92,255,.4);display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+.cta h2{font-size:22px;letter-spacing:-.01em}.cta p{color:var(--muted);max-width:640px;margin-top:4px}
+.cta a{background:#fff;color:#111;font-weight:700;text-decoration:none;padding:12px 20px;border-radius:9px;white-space:nowrap}
+footer{margin-top:24px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--dim);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+footer a{color:var(--muted)}
+.err{padding:30px;color:var(--amber)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div class="wrap">
+  <header class="top">
+    <div class="logo" aria-hidden="true">⟡</div>
+    <div><div class="t">AI Lead Qualification Agent</div><div class="s">Vector + LLM scoring · CRM webhooks</div></div>
+    <div class="right">
+      <span class="pill on">● Demo mode: runs in your browser</span>
+      <a class="pill" href="https://github.com/zov911/ai-lead-qualification-agent" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <div class="kicker">Speed-to-lead, automated</div>
+      <h1>Every inbound lead scored, explained and routed <span>in seconds</span></h1>
+      <p class="lede">A webhook receives the lead from your CRM or form. <b>Qwen3 embeddings</b> (via Ollama) compare it with your ideal customer profiles and past won/lost deals. <b>Claude</b> (or OpenAI) then qualifies it on BANT using that evidence, and the score, tier, next action and a reply draft are pushed back to HubSpot, Pipedrive, Slack or any webhook.</p>
+    </div>
+    <div class="pipe" id="pipe">
+      <div class="step" data-s="0"><span class="n">01</span><b>Webhook in</b><small>HubSpot · Pipedrive · forms</small></div>
+      <div class="step" data-s="1"><span class="n">02</span><b>Normalize</b><small>One lead schema, PII-capped</small></div>
+      <div class="step" data-s="2"><span class="n">03</span><b>Embed</b><small>Qwen3-Embedding via Ollama</small></div>
+      <div class="step" data-s="3"><span class="n">04</span><b>Vector fit</b><small>ICP similarity + kNN won/lost</small></div>
+      <div class="step" data-s="4"><span class="n">05</span><b>Rules</b><small>Email, title, spam, size</small></div>
+      <div class="step" data-s="5"><span class="n">06</span><b>LLM qualify</b><small>Claude / OpenAI, BANT JSON</small></div>
+      <div class="step" data-s="6"><span class="n">07</span><b>Blend & route</b><small>Tier A–D + next action</small></div>
+      <div class="step" data-s="7"><span class="n">08</span><b>CRM out</b><small>Signed webhook / API</small></div>
+    </div>
+  </section>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="main">
+    <aside class="panel">
+      <div class="ph"><h2>Inbound leads</h2><span class="sub" id="inboxCount"></span></div>
+      <div class="inbox" id="inbox"></div>
+      <button class="addbtn" id="addLead" type="button">+ Score your own lead</button>
+    </aside>
+    <section class="panel" aria-live="polite"><div class="detail" id="detail"><div class="err">Loading demo…</div></div></section>
+  </div>
+
+  <section class="how">
+    <div class="card"><h3>Run it for real</h3><p><code>ollama pull qwen3-embedding:0.6b</code><br><code>cp .env.example .env</code> (add an Anthropic or OpenAI key)<br><code>npm install && npm start</code></p></div>
+    <div class="card"><h3>Connect your CRM</h3><p>Point a HubSpot workflow, Pipedrive webhook or Zapier/Make/n8n step at <code>POST /webhooks/lead/:source</code>. Results come back as signed webhooks or direct CRM property updates.</p></div>
+    <div class="card"><h3>Why vectors + LLM?</h3><p>Embeddings ground the score in <i>your</i> history (what actually closed). The LLM reads intent and BANT and writes the reply. Rules add hard guards, so spam never reaches sales.</p></div>
+  </section>
+
+  <aside class="cta">
+    <div><h2>Want an AI lead agent like this for your business?</h2><p>I build and deploy AI agents wired into your CRM, data and workflows, trained on your ICP and closed-won history. Forward-deployed: from first workshop to production.</p></div>
+    <a href="https://zov911.com" target="_blank" rel="noopener">Reach out → zov911.com</a>
+  </aside>
+
+  <footer>
+    <div>© <span id="yr">2026</span> zov911 · Designed &amp; built by <a href="https://zov911.com" target="_blank" rel="noopener">zov911</a></div>
+    <div>The demo uses offline hash embeddings and a heuristic qualifier. Production uses Qwen3 + Claude/OpenAI. Sample data is fictional.</div>
+  </footer>
+</div>
+
+<dialog id="dlg">
+  <form method="dialog" id="leadForm">
+    <div class="ph"><h2>Score your own lead</h2><span class="sub">Nothing leaves your browser</span></div>
+    <div class="form">
+      <label>Name<input name="name" required value="Chris Novak"></label>
+      <label>Work email<input name="email" type="email" value="chris@acmeflow.com"></label>
+      <label>Title<input name="title" value="Head of Demand Generation"></label>
+      <label>Company<input name="company" value="AcmeFlow"></label>
+      <label>Industry<input name="industry" value="B2B SaaS"></label>
+      <label>Employees<input name="employees" value="180"></label>
+      <label class="full">Message<textarea name="message">Our paid campaigns generate lots of MQLs but sales says quality is poor. We need lead scoring connected to HubSpot within 30 days.</textarea></label>
+      <div class="full" style="display:flex;gap:8px;justify-content:flex-end"><button class="btn ghost" value="cancel" formnovalidate>Cancel</button><button class="btn" value="ok">Score lead →</button></div>
+    </div>
+  </form>
+</dialog>
+
+<script type="module">
+import { leadToText } from './src/core/text.js';
+import { hashEmbed } from './src/core/vector.js';
+import { vectorFit, ruleSignals, combine, DEFAULT_WEIGHTS, CALIBRATION } from './src/core/scoring.js';
+import { mockQualify } from './src/core/mockLLM.js';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const TIER_COLOR = { A:'var(--green)', B:'var(--cyan)', C:'var(--amber)', D:'var(--red)' };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+$('yr').textContent = new Date().getFullYear();
+
+let index, results = [], selected = 0;
+
+async function load() {
+  const get = f => fetch(f).then(r => { if (!r.ok) throw new Error(f); return r.json(); });
+  const [icps, history, leads] = await Promise.all([get('data/icp.json'), get('data/history.json'), get('data/sample-leads.json')]);
+  const dealText = d => `${leadToText(d)}\nOutcome summary: ${d.summary}`;
+  index = {
+    icps: icps.map(i => ({ id: i.id, name: i.name, vector: hashEmbed(`${i.name}\n${i.description}`) })),
+    history: history.map(d => ({ id: d.id, company: d.company, outcome: d.outcome, value: d.value, summary: d.summary, vector: hashEmbed(dealText(d)) })),
+  };
+  results = leads.map(score);
+  renderInbox(); renderKpis(); show(0, false);
+}
+
+function score(lead) {
+  const vector = vectorFit(hashEmbed(leadToText(lead)), index.icps, index.history, { embedder: 'hash' });
+  const rules = ruleSignals(lead);
+  const qualification = rules.flags.spam ? null : mockQualify(lead, { vector, rules });
+  const final = combine({ llm: qualification?.score, vector: vector.score, rules: rules.score, flags: rules.flags });
+  return { lead, vector, rules, qualification, final, scoredAt: new Date().toISOString() };
+}
+
+function renderKpis() {
+  const n = results.length;
+  const hot = results.filter(r => r.final.tier === 'A' || r.final.tier === 'B').length;
+  const dq = results.filter(r => r.final.tier === 'D').length;
+  const avg = Math.round(results.reduce((s, r) => s + r.final.score, 0) / (n || 1));
+  $('kpis').innerHTML = [
+    [n, 'Leads scored'], [hot, 'Sales-ready (A/B)'], [dq, 'Filtered out (D)'], [`~${Math.round(n * 9)} min`, 'Triage time saved (≈9 min/lead)'],
+  ].map(([v, l]) => `<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+}
+
+function renderInbox() {
+  $('inboxCount').textContent = `${results.length} leads`;
+  $('inbox').innerHTML = results.map((r, i) => `
+    <button class="lead" type="button" data-i="${i}" aria-current="${i === selected}">
+      <span><span class="nm">${esc(r.lead.name)}</span><br><span class="co">${esc(r.lead.title || '')}${r.lead.company ? ' · ' + esc(r.lead.company) : ''}</span></span>
+      <span class="tier t${r.final.tier}">${r.final.tier} · ${r.final.score}</span>
+      <span class="msg">${esc(r.lead.message || '')}</span>
+    </button>`).join('');
+}
+
+async function animatePipeline() {
+  const steps = [...document.querySelectorAll('.step')];
+  steps.forEach(s => s.classList.remove('active', 'done'));
+  for (const s of steps) { s.classList.add('active'); await sleep(110); s.classList.replace('active', 'done'); }
+}
+
+async function show(i, animate = true) {
+  selected = i;
+  document.querySelectorAll('.lead').forEach(b => b.setAttribute('aria-current', String(+b.dataset.i === i)));
+  if (animate && !matchMedia('(prefers-reduced-motion: reduce)').matches) await animatePipeline();
+  renderDetail(results[i]);
+}
+
+const icpPct = s => { const c = CALIBRATION.hash; return Math.round(Math.min(1, Math.max(0, (s - c.floor) / (c.ceil - c.floor))) * 100); };
+
+function bar(label, value, color, note = '') {
+  return `<div class="bar"><div class="lb"><span>${label}</span><span>${value ?? '—'}${note}</span></div>
+    <div class="track"><div class="fill" style="width:${value ?? 0}%;background:${color}"></div></div></div>`;
+}
+
+function renderDetail(r) {
+  const q = r.qualification, f = r.final, v = r.vector, color = TIER_COLOR[f.tier];
+  const C = 2 * Math.PI * 56, off = C * (1 - f.score / 100);
+  const W = DEFAULT_WEIGHTS;
+  const crm = {
+    lead_id: r.lead.id || null, email: r.lead.email || null, ai_lead_score: f.score, ai_lead_tier: f.tier, ai_route: f.route,
+    ai_icp_match: v.bestIcp?.name || null, ai_summary: q?.summary || null, ai_next_best_action: q?.next_best_action || 'disqualify',
+    ai_bant: q ? Object.fromEntries(Object.entries(q.bant).map(([k, x]) => [k, x.status])) : null, scored_at: r.scoredAt,
+  };
+  const curl = `curl -X POST https://your-agent.example.com/webhooks/lead/generic \\
+  -H "content-type: application/json" \\
+  -H "x-webhook-secret: $INBOUND_WEBHOOK_SECRET" \\
+  -d '${JSON.stringify({ name: r.lead.name, email: r.lead.email, title: r.lead.title, company: r.lead.company, message: r.lead.message }).replace(/'/g, "\\'")}'`;
+
+  $('detail').innerHTML = `
+    <div class="dh">
+      <div class="ring">
+        <svg width="132" height="132" viewBox="0 0 132 132"><circle cx="66" cy="66" r="56" fill="none" stroke="var(--line)" stroke-width="12"/>
+        <circle cx="66" cy="66" r="56" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${off}" style="transition:stroke-dashoffset .8s"/></svg>
+        <div class="c"><div><b style="color:${color}">${f.score}</b><br><small>Tier ${f.tier}</small></div></div>
+      </div>
+      <div class="who">
+        <div class="nm">${esc(r.lead.name)}</div>
+        <div class="co">${esc(r.lead.title || 'Unknown role')} · ${esc(r.lead.company || 'Unknown company')}${r.lead.employees ? ' · ' + esc(r.lead.employees) + ' employees' : ''}</div>
+        <div class="route" style="background:color-mix(in srgb, ${color} 14%, transparent);color:${color}">➜ ${f.label}</div>
+        <div class="summary">${esc(q?.summary || 'Spam / vendor pitch detected by rules. LLM call skipped to save tokens.')}</div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card"><h3>Score blend <span>weights ${W.llm} / ${W.vector} / ${W.rules}</span></h3>
+        ${bar('LLM qualification (BANT + intent)', q?.score, 'var(--violet)')}
+        ${bar('Vector fit (ICP + won/lost kNN)', v.score, 'var(--cyan)')}
+        ${bar('Rule signals', r.rules.score, 'var(--amber)')}
+      </div>
+      <div class="card"><h3>ICP match <span>cosine similarity</span></h3>
+        ${v.icpRanked.map((x, n) => bar(esc(x.name), icpPct(x.similarity), n === 0 ? 'var(--cyan)' : 'var(--line2)', ` · ${x.similarity}`)).join('')}
+      </div>
+    </div>
+
+    ${q ? `<div class="sec"><div class="grid4">${Object.entries(q.bant).map(([k, b]) => `
+      <div class="bant s-${b.status}"><div class="k">${k}</div><div class="st">${b.status}</div><div class="ev">${esc(b.evidence)}</div></div>`).join('')}</div></div>` : ''}
+
+    <div class="grid2 sec">
+      <div class="card"><h3>Most similar past deals <span>win rate ${Math.round(v.winRate * 100)}%</span></h3>
+        ${v.neighbors.map(n => `<div class="nb"><span class="oc ${n.outcome}">${n.outcome.toUpperCase()}</span>
+          <span>${esc(n.company)}<span class="sm">${esc(n.summary)}</span></span><span class="sim">${n.similarity}</span></div>`).join('')}
+      </div>
+      <div class="card"><h3>Rule signals <span>${r.rules.score}/100</span></h3>
+        ${r.rules.signals.map(s => `<div class="sig"><span>${esc(s.label)}</span><b class="${s.points > 0 ? 'plus' : 'minus'}">${s.points > 0 ? '+' : ''}${s.points}</b></div>`).join('') || '<div class="sig">No signals</div>'}
+      </div>
+    </div>
+
+    ${q ? `<div class="grid2 sec">
+      <div class="card"><h3>Why this score</h3><ul class="list pos">${q.reasons.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+      <div class="card"><h3>Risks & gaps</h3><ul class="list neg">${(q.risks.length ? q.risks : ['None flagged']).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+    </div>` : ''}
+
+    <div class="card sec">
+      <h3>Output <span>pushed to CRM</span></h3>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" aria-selected="true" data-tab="reply">Reply draft</button>
+        <button type="button" role="tab" aria-selected="false" data-tab="crm">CRM payload</button>
+        <button type="button" role="tab" aria-selected="false" data-tab="curl">Webhook call</button>
+      </div>
+      <div data-pane="reply"><div class="reply">${esc(q?.reply_draft || '(No reply: lead disqualified)')}</div>
+        <div style="margin-top:8px"><button class="mini" type="button" data-copy="reply">Copy reply</button></div></div>
+      <div data-pane="crm" hidden><pre>${esc(JSON.stringify(crm, null, 2))}</pre></div>
+      <div data-pane="curl" hidden><pre>${esc(curl)}</pre></div>
+    </div>`;
+
+  $('detail').querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => {
+    $('detail').querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x === b)));
+    $('detail').querySelectorAll('[data-pane]').forEach(p => p.hidden = p.dataset.pane !== b.dataset.tab);
+  }));
+  const cp = $('detail').querySelector('[data-copy]');
+  cp?.addEventListener('click', async () => { try { await navigator.clipboard.writeText(q?.reply_draft || ''); cp.textContent = '✓ Copied'; } catch { cp.textContent = 'Copy failed'; } });
+}
+
+$('inbox').addEventListener('click', e => { const b = e.target.closest('.lead'); if (b) show(+b.dataset.i); });
+$('addLead').addEventListener('click', () => $('dlg').showModal());
+$('leadForm').addEventListener('submit', e => {
+  if (e.submitter?.value !== 'ok') return;
+  const lead = Object.fromEntries(new FormData($('leadForm')).entries());
+  lead.source = 'Demo form';
+  results.unshift(score(lead));
+  renderInbox(); renderKpis(); show(0);
+});
+
+load().catch(err => {
+  $('detail').innerHTML = `<div class="err">Couldn't load demo data (${esc(err.message)}). If you opened this file directly, serve the folder over HTTP instead, e.g. <code>npm start</code> → http://localhost:8787</div>`;
+});
+</script>
+</body>
+</html>

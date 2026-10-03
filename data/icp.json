@@ -1,0 +1,17 @@
+[
+  {
+    "id": "icp-saas",
+    "name": "Mid-market B2B SaaS revenue team",
+    "description": "B2B software company with 50-1,000 employees, Series B or later. Buyers: VP Marketing, Head of Demand Gen, RevOps lead or CRO. Runs HubSpot or Salesforce with paid ads, content and SDR outbound. Pain: can't prove which channels drive pipeline, poor lead quality, sales ignores MQLs, manual reporting in spreadsheets."
+  },
+  {
+    "id": "icp-industrial",
+    "name": "Industrial manufacturer going digital",
+    "description": "Manufacturer or industrial distributor with 200-5,000 employees selling through dealers and direct sales. Buyers: Marketing Director, VP Sales, Digital Transformation lead. Pain: website and trade-show leads lost in email, no CRM discipline, long quoting cycles, need to see ROI from digital marketing spend."
+  },
+  {
+    "id": "icp-fintech",
+    "name": "Regulated fintech or financial services",
+    "description": "Fintech, payments, lending or wealth-management firm with 50-2,000 employees in a regulated market. Buyers: CMO, Head of Growth, Marketing Ops. Pain: consent and privacy-safe tracking (server-side), attribution across long consideration cycles, compliance review of marketing data, high customer acquisition cost."
+  }
+]
